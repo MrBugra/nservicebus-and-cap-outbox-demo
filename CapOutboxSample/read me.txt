@@ -1,0 +1,15 @@
+docker compose up -d
+
+dotnet ef migrations add Initial
+
+dotnet ef database update
+
+\connect Test
+set schema 'cap';
+select * from received
+select * from published
+    
+
+\connect Test
+set schema 'public';
+select * from "Wallet"

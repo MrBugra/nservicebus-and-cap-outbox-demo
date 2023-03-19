@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+
+  rabbit:
+    image: rabbitmq:3-management
+    container_name: rabbit
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    hostname: my-rabbit
+
+  postgres:
+    container_name: postgres_demo
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      PGDATA: /data/postgres
+    volumes:
+       - postgres-db:/data/postgres
+    ports:
+      - "5432:5432"
+
+
+volumes:
+  postgres-db:
+    driver: local
