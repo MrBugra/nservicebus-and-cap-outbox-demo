@@ -1,8 +1,7 @@
 ﻿using CapOutboxSample.Constants;
-using CapOutboxSample.Models;
+using CapOutboxSample.Events;
 using CapOutboxSample.Processors;
 using DotNetCore.CAP;
-using Newtonsoft.Json;
 
 namespace CapOutboxSample.Subscribers;
 
@@ -16,7 +15,7 @@ public class WalletCreatedSubscriberV2 : ICapSubscribe
     }
 
     [CapSubscribe(EventConstants.WalletCreated, Group = "group2")]
-    public void Consumer(PostWalletRequest eventData, [FromCap] CapHeader header)
+    public void Consumer(WalletCreated eventData, [FromCap] CapHeader header)
     {
         if (_messageProcessor.HasProcessed(header["cap-msg-id"]))
             return;

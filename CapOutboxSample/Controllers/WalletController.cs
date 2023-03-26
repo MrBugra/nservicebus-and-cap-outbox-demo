@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using CapOutboxSample.Constants;
 using CapOutboxSample.Data;
+using CapOutboxSample.Events;
 using CapOutboxSample.Models;
 using DotNetCore.CAP;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CapOutboxSample.Controllers
@@ -23,14 +19,10 @@ namespace CapOutboxSample.Controllers
             _capBus = capBus;
             _dbContext = dbContext;
         }
-
-        [HttpPost("")]
+        
+        [HttpPost("basic")]
         public IActionResult Post([FromBody] PostWalletRequest request)
         {
-            var transactionId = Guid.NewGuid().ToString();
-            
-            using var transaction = _dbContext.Database.BeginTransaction(_capBus, autoCommit: false);
-            
             _dbContext.Wallet.Add(new Wallet
             {
                 Username = request.Username,
@@ -38,11 +30,47 @@ namespace CapOutboxSample.Controllers
             });
             var queueHeaders = new Dictionary<string, string>()
             {
-                {"correlationId", transactionId}
+                {"correlationId", Guid.NewGuid().ToString()}
             };
 
-            _capBus.Publish(EventConstants.WalletCreated, request, queueHeaders);
+            var @event = new WalletCreated {Username = request.Username, Balance = request.Balance};
 
+            _capBus.Publish(EventConstants.WalletCreated, @event, queueHeaders);
+
+            _dbContext.SaveChanges();
+
+            return Created(string.Empty,default);
+        }
+        
+
+        [HttpPost("outbox")]
+        public IActionResult OutboxPost([FromBody] PostWalletRequest request)
+        {
+            var transactionId = Guid.NewGuid().ToString();
+            
+            using var transaction = _dbContext.Database.BeginTransaction(_capBus, autoCommit: false);
+
+            var wallet = new Wallet
+            {
+                Username = request.Username,
+                Balance = request.Balance
+            };
+            
+            _dbContext.Wallet.Add(wallet);
+            
+            var queueHeaders = new Dictionary<string, string>()
+            {
+                {"correlationId", transactionId}
+            };
+            
+            var @event = new WalletCreated {Username = request.Username, Balance = request.Balance};
+            
+            _capBus.Publish(EventConstants.WalletCreated, @event, queueHeaders);
+
+            _dbContext.SaveChanges();
+
+            wallet.Balance += 10;
+            _dbContext.Wallet.Update(wallet);
             _dbContext.SaveChanges();
 
             transaction.Commit();
@@ -60,8 +88,10 @@ namespace CapOutboxSample.Controllers
                 Username = request.Username,
                 Balance = request.Balance
             });
-            
-            _capBus.Publish(EventConstants.WalletCreated, request, EventConstants.WalletCreatedCallback);
+
+            var @event = new WalletCreated {Username = request.Username, Balance = request.Balance};
+
+            _capBus.Publish(EventConstants.WalletCreated, @event, EventConstants.WalletCreatedCallback);
 
             _dbContext.SaveChanges();
 

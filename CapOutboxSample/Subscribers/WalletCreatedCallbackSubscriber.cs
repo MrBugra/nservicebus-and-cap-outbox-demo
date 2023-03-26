@@ -1,5 +1,5 @@
 ﻿using CapOutboxSample.Constants;
-using CapOutboxSample.Models;
+using CapOutboxSample.Events;
 using CapOutboxSample.Processors;
 using DotNetCore.CAP;
 
@@ -15,11 +15,11 @@ public class WalletCreatedCallbackSubscriber : ICapSubscribe
     }
 
     [CapSubscribe(EventConstants.WalletCreatedCallback, Group = "group1")]
-    public void Consumer(PostWalletRequest eventData, [FromCap] CapHeader header)
+    public void Consumer([FromCap] CapHeader header)
     {
         if (_messageProcessor.HasProcessed(header["cap-msg-id"]))
             return;
             
-        Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(eventData));
+        Console.WriteLine("callback-succeeded");
     }
 }

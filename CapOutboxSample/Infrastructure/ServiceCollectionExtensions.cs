@@ -1,6 +1,7 @@
 ﻿using CapOutboxSample.Data;
 using CapOutboxSample.Filters;
 using CapOutboxSample.Subscribers;
+using Microsoft.EntityFrameworkCore;
 
 namespace CapOutboxSample.Infrastructure;
 
@@ -34,5 +35,11 @@ public static class ServiceCollectionExtensions
         services.AddTransient<WalletCreatedSubscriber>();
         services.AddTransient<WalletCreatedSubscriberV2>();
         services.AddTransient<WalletCreatedCallbackSubscriber>();
-    } 
+    }
+    
+    public static void AddEf(this IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddDbContext<WalletDbContext>(options =>
+            options.UseNpgsql("Server=localhost;Port=5432;Database=Test;User Id=admin;Password=admin;"));
+    }
 }
